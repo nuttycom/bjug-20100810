@@ -40,7 +40,7 @@ trait PeopleGen {
 
 object PeopleProps extends Properties("Person") with PeopleGen {
   import Person._
-  property("tautology") = forAll((p: Person) => p.father.flatMap(motherF).flatMap(bestFriendF).getOrElse(p) == p || p.father.flatMap(motherF).flatMap(bestFriendF).getOrElse(p) != p)
+//  property("tautology") = forAll((p: Person) => p.father.flatMap(motherF).flatMap(bestFriendF).getOrElse(p) == p || p.father.flatMap(motherF).flatMap(bestFriendF).getOrElse(p) != p)
 }
 
 trait OptGen {
@@ -48,29 +48,31 @@ trait OptGen {
   implicit def arbJOpt[T](implicit arb: Arbitrary[T]): Arbitrary[JOpt[T]] = Arbitrary(arbitrary[T].flatMap(maybeSome))
 }
 
-object JOptSpec extends Properties("JOpt") with OptGen {
-  property("non-emptiness") = forAll((v: JOpt[Int]) => v.isInstanceOf[JOpt.Some[_]] ==> !v.isEmpty) 
-  property("emptiness")     = forAll((v: JOpt[Int]) => v.isInstanceOf[JOpt.None[_]] ==> v.isEmpty )
-
-  property("iterability") = forAll(
-    (i: Int) => i > Integer.MIN_VALUE ==> {
-      var extracted = Integer.MIN_VALUE
-      for (ii <- JOpt.some(i)) extracted = ii
-      extracted == i
+object JOptSpec extends Specification {
+  "a jopt instance" should {
+    "be empty if none" in {
+      (JOpt.none[Int]: Iterable[Int]) must be empty
     }
-  ) 
 
-  val addOneAndMakeString = new F[Int, String] {
-    override def apply(i: Int) = (i + 1).toString
+    "be non-empty if some" in {
+      (JOpt.some(5): Iterable[Int]) must contain(5)
+    }
+
+    "be iterable" in {
+      var extracted = Integer.MIN_VALUE
+      for (i <- JOpt.some(5)) extracted = i
+      extracted must be(5)
+    }
+
+    "be mappable" in {
+      val addOneAndMakeString = new F[Int, String] {
+        override def apply(i: Int) = (i + 1).toString
+      }
+
+      JOpt.some(4).map(addOneAndMakeString) must be equalTo(JOpt.some("5"))
+      JOpt.none[Int].map(addOneAndMakeString) must be equalTo(JOpt.none[String])
+    }
   }
-
-  property("mapSome") = forAll(
-    (i: Int) => JOpt.some(i).map(addOneAndMakeString) == JOpt.some((i + 1).toString)
-  )
-
-  property("mapNone") = forAll(
-    (v: JOpt[Int]) => v.isEmpty ==> (v.map(addOneAndMakeString) == JOpt.none[String])
-  )
 }
 
 //object PersonSpec extends Specification with ScalaCheck with PeopleGen {
