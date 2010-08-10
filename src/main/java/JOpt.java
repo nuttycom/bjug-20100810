@@ -15,7 +15,7 @@ public abstract class JOpt<A> implements Iterable<A> {
     return JOpt.<B>none();
   }
   
-  public <B> JOpt<B> flatMap(F<A, JOpt<B>> f) {
+  public <B> JOpt<B> flatMap(F<? super A, JOpt<B>> f) {
     for (A a : this) return f.apply(a);
     return JOpt.<B>none();
   }
