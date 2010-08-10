@@ -31,17 +31,38 @@ public abstract class JOpt<A> implements Iterable<A> {
   }
 
   public <B> F<B, B> fold(final F<A, B> f, final F2<B, B, B> append) {
-    for (final A a : this) return new F<B, B>() {
-      public B apply(B b) {
-        return append.apply(f.apply(a), b);
+    return this.<F<B, B>>fold(
+      new F<A, F<B, B>>() {
+        public F<B, B> apply(final A a) {
+          return new F<B, B>() {
+            public B apply(final B b) {
+              return append.apply(f.apply(a), b);
+            }
+          };
+        }
+      },
+      new F<B, B>() {
+        public B apply(B b) {
+          return b;
+        }
       }
-    };
+    );
+//    for (final A a : this) return new F<B, B>() {
+//      public B apply(B b) {
+//        return append.apply(f.apply(a), b);
+//      }
+//    };
+//
+//    return new F<B, B>() {
+//      public B apply(B b) {
+//        return b;
+//      }
+//    };
+  }
 
-    return new F<B, B>() {
-      public B apply(B b) {
-        return b;
-      }
-    };
+  public <B> B fold(final F<A, B> f, final B b) {
+    for (final A a : this) return f.apply(a);
+    return b;
   }
 
   public static <A> JOpt<A> none() {
@@ -57,9 +78,6 @@ public abstract class JOpt<A> implements Iterable<A> {
   }
 
   public static class None<A> extends JOpt<A> {
-    private None() {
-    }
-
     @Override public boolean isEmpty() {
       return true;
     }
@@ -87,7 +105,7 @@ public abstract class JOpt<A> implements Iterable<A> {
 
   public static class Some<A> extends JOpt<A> {
     private final A value;
-    private Some(A value) {
+    public Some(A value) {
       this.value = value;
     }
 

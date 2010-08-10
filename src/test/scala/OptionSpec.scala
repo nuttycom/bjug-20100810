@@ -6,21 +6,12 @@ import org.scalacheck.Prop._
 import org.scalacheck.Arbitrary.arbitrary
 import scala.collection.JavaConversions._
 
-object FConversions {
-  implicit def f2scalaFunction[A, B](f: F[A, B]): A => B = (a: A) => f.apply(a)
-  implicit def scalaFunction2F[A, B](f: A => B): F[A, B] = new F[A,B] {
-    def apply(a: A) = f(a)
-  }
-}
-
 trait OptGen {
   def maybeSome[T](v: T) = oneOf(JOpt.some(v), JOpt.none[T])
   implicit def arbJOpt[T](implicit arb: Arbitrary[T]): Arbitrary[JOpt[T]] = Arbitrary(arbitrary[T].flatMap(maybeSome))
 }
 
 object JOptSpec extends Properties("JOpt") with OptGen {
-  import FConversions._
-
   property("non-emptiness") = forAll((v: JOpt[Int]) => v.isInstanceOf[JOpt.Some[_]] ==> !v.isEmpty) 
   property("emptiness")     = forAll((v: JOpt[Int]) => v.isInstanceOf[JOpt.None[_]] ==> v.isEmpty )
 
@@ -32,12 +23,16 @@ object JOptSpec extends Properties("JOpt") with OptGen {
     }
   ) 
 
+  val addOneAndMakeString = new F[Int, String] {
+    override def apply(i: Int) = (i + 1).toString
+  }
+
   property("mapSome") = forAll(
-    (i: Int) => JOpt.some(i).map((x: Int) => (x + 1).toString) == JOpt.some((i + 1).toString)
+    (i: Int) => JOpt.some(i).map(addOneAndMakeString) == JOpt.some((i + 1).toString)
   )
 
   property("mapNone") = forAll(
-    (v: JOpt[Int]) => v.isEmpty ==> (v.map((x: Int) => (x + 1).toString) == JOpt.none[String])
+    (v: JOpt[Int]) => v.isEmpty ==> (v.map(addOneAndMakeString) == JOpt.none[String])
   )
 }
 
@@ -78,8 +73,8 @@ object PersonSpec extends Specification with ScalaCheck with PeopleGen {
         line2 <- address.addr2
       } yield (person.name, mother.name, grandfather.name, line2)
 
-      println(results)
-      pass
+      println(results.mkString("\n"))
+      results must not be empty
     }
   }
 }
