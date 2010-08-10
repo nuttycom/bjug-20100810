@@ -1,12 +1,16 @@
-import scala.Option;
-
 public class Person {
   public final String name;
-  public final Option<Person> father;
-  public final Option<Person> mother;
-  public final Option<Address> address;
+  public final Person father;
+  public final Person mother;
+  public final Address address;
 
-  public Person(String name, Option<Person> father, Option<Person> mother, Option<Address> address) {
+  /**
+   * @param name the person's name - you have to have this!
+   * @param father may be null
+   * @param mother may be null
+   * @param address may be null
+   */
+  public Person(String name, Person father, Person mother, Address address) {
     this.name = name;
     this.father = father;
     this.mother = mother;
