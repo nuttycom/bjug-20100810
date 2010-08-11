@@ -1,4 +1,6 @@
 sealed trait SOpt[+A] {
+  import SOpt._
+
   def fold[B](ifSome: A => B, ifNone: => B): B
  
   def map[B](f: A => B): SOpt[B] = fold(a => some(f(a)), none[B])
