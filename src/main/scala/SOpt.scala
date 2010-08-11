@@ -1,9 +1,9 @@
 sealed trait SOpt[+A] {
-  def cata[X](ifSome: A => X, ifNone: => X): X
+  def fold[B](ifSome: A => B, ifNone: => B): B
  
-  def map[B](f: A => B): SOpt[B] = error("todo")
+  def map[B](f: A => B): SOpt[B] = fold(a => some(f(a)), none[B])
  
-  def flatMap[B](f: A => SOpt[B]): SOpt[B] = error("todo")
+  def flatMap[B](f: A => SOpt[B]): SOpt[B] = fold(f, none[B])
  
   def getOrElse[AA >: A](e: => AA): AA = error("todo")
  
@@ -19,9 +19,9 @@ sealed trait SOpt[+A] {
  
   def orElse[AA >: A](o: SOpt[AA]): SOpt[AA] = error("todo")
  
-  def toLeft[X](right: => X): Either[A, X] = error("todo")
+  def toLeft[B](right: => B): Either[A, B] = error("todo")
  
-  def toRight[X](left: => X): Either[X, A] = error("todo")
+  def toRight[B](left: => B): Either[B, A] = error("todo")
  
   def toList: List[A] = error("todo")
  
@@ -30,11 +30,11 @@ sealed trait SOpt[+A] {
 
 object SOpt {
   def some[A](a: A) = new SOpt[A] {
-    override def cata[X](ifSome: A => X, ifNone: => X): X = ifSome(a)
+    override def fold[B](ifSome: A => B, ifNone: => B): B = ifSome(a)
   }
   
   def none[A] = new SOpt[A] {
-    override def cata[X](ifSome: A => X, ifNone: => X): X = ifNone
+    override def fold[B](ifSome: A => B, ifNone: => B): B = ifNone
   }
 }
 
